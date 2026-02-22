@@ -5,9 +5,13 @@ import pandas as pd
 # 1. إعدادات الصفحة والهوية البصرية
 st.set_page_config(page_title="EDA Mobile System", layout="wide", initial_sidebar_state="collapsed")
 
-# روابط الجداول (تم تحويلها لصيغة التصدير البرمجي لضمان الاتصال)
-LINK_INSPECTORS = "https://docs.google.com/spreadsheets/d/1wfIdnwszEI0_EURhyH-LcFLfwXhJSO15/export?format=csv&gid=919550898"
-LINK_ACHIEVEMENTS = "https://docs.google.com/spreadsheets/d/1cgXGh4hp54XNZY7JbgS7ZjiLjPmYeOFz/export?format=csv&gid=250291105"
+# محاولة جلب الروابط من السيكرتس، وفي حال الفشل نستخدم الروابط الافتراضية
+    LINK_INSPECTORS = st.secrets["LINK_INSPECTORS"]
+    LINK_ACHIEVEMENTS = st.secrets["LINK_ACHIEVEMENTS"]
+ Exception:
+    # روابط احتياطية في حال عدم وجود Secrets (تأكد من صحة الروابط هنا)
+    LINK_INSPECTORS = "https://docs.google.com/spreadsheets/d/1wfIdnwszEI0_EURhyH-LcFLfwXhJSO15/edit"
+    LINK_ACHIEVEMENTS = "https://docs.google.com/spreadsheets/d/1cgXGh4hp54XNZY7JbgS7ZjiLjPmYeOFz/edit"
 
 # رابط التعديل الأصلي (لأغراض المزامنة عبر GSheetsConnection)
 URL_INSPECTORS_EDIT = "https://docs.google.com/spreadsheets/d/1wfIdnwszEI0_EURhyH-LcFLfwXhJSO15/edit#gid=919550898"
