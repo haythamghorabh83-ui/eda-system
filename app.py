@@ -2,141 +2,146 @@ import streamlit as st
 from streamlit_gsheets import GSheetsConnection
 import pandas as pd
 
-# 1. إعدادات الصفحة والأيقونة (Favicon)
+# 1. إعدادات الصفحة والأيقونة (تم تحديث الأيقونة لتظهر في تبويب المتصفح)
 st.set_page_config(
     page_title="EDA Mobile System",
-    page_icon="🛡️",
+    page_icon="🛡️", # يمكنك استبدالها برابط مباشر للصورة إذا توفر رابط دائم ينتهي بـ .png
     layout="wide",
     initial_sidebar_state="collapsed"
 )
 
-# 2. جلب الروابط من Secrets مع خطة بديلة (Fallback) في حال عدم وجودها
+# 2. جلب الروابط من Secrets مع خطة بديلة (Fallback)
 try:
     LINK_INSPECTORS = st.secrets["LINK_INSPECTORS"]
     LINK_ACHIEVEMENTS = st.secrets["LINK_ACHIEVEMENTS"]
 except Exception:
-    # الروابط التي زودتني بها (تستخدم في حال فشل السيكرتس)
+    # الروابط الافتراضية في حال عدم ضبط Secrets
     LINK_INSPECTORS = "https://docs.google.com/spreadsheets/d/1wfIdnwszEI0_EURhyH-LcFLfwXhJSO15/edit"
     LINK_ACHIEVEMENTS = "https://docs.google.com/spreadsheets/d/1cgXGh4hp54XNZY7JbgS7ZjiLjPmYeOFz/edit"
 
-# روابط القراءة السريعة (لحل مشكلة 404)
+# تحويل الروابط لصيغة القراءة البرمجية CSV
 READ_LINK_INS = LINK_INSPECTORS.replace('/edit', '/export?format=csv')
 READ_LINK_ACH = LINK_ACHIEVEMENTS.replace('/edit', '/export?format=csv')
 
-# 3. تنسيق الواجهة (CSS)
+# 3. تنسيق الواجهة (CSS) لتحسين المظهر على الموبايل
 st.markdown("""
     <style>
-    .stApp { background-color: #fcfcfc; }
-    .main-title { font-size: 32px; color: #1a4a7a; text-align: center; font-weight: bold; margin-top: -50px; }
-    .sub-title { font-size: 18px; color: #d4a017; text-align: center; margin-bottom: 20px; }
-    .stButton>button { width: 100%; border-radius: 12px; height: 3.5em; font-weight: bold; }
+    .stApp { background-color: #f8f9fa; }
+    .main-title { font-size: 28px; color: #1a4a7a; text-align: center; font-weight: bold; margin-top: -30px; }
+    .sub-title { font-size: 16px; color: #d4a017; text-align: center; margin-bottom: 20px; font-weight: bold; }
+    .stButton>button { width: 100%; border-radius: 10px; height: 3.5em; background-color: #1a4a7a; color: white; }
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
     #MainMenu {visibility: hidden;} footer {visibility: hidden;}
     </style>
     """, unsafe_allow_html=True)
 
-# عرض الشعار في المنتصف
-col_l, col_m, col_r = st.columns([1, 1, 1])
+# 4. عرض الشعار الجديد (تم استخدام رابط الشعار الرسمي لضمان الظهور)
+col_l, col_m, col_r = st.columns([1, 2, 1])
 with col_m:
-    st.image("https://www.edaegypt.gov.eg/media/1001/logo.png", use_container_width=True)
+    # تأكد من رفع ملف "الشعار.jpg" إلى GitHub في نفس مجلد app.py
+    try:
+        st.image("الشعار.jpg", use_container_width=True)
+    except:
+        # رابط احتياطي في حال عدم وجود الملف محلياً
+        st.image("https://www.edaegypt.gov.eg/media/1001/logo.png", use_container_width=True)
 
 st.markdown('<p class="main-title">هيئة الدواء المصرية</p>', unsafe_allow_html=True)
-st.markdown('<p class="sub-title">نظام الإدارة الميدانية الذكي</p>', unsafe_allow_html=True)
+st.markdown('<p class="sub-title">Egyptian Drug Authority</p>', unsafe_allow_html=True)
 
-# 4. الاتصال بقواعد البيانات
+# 5. الاتصال بقاعدة البيانات
 conn = st.connection("gsheets", type=GSheetsConnection)
 
-# 5. نظام الدخول
+# 6. نظام تسجيل الدخول في القائمة الجانبية
 if 'auth' not in st.session_state:
     st.session_state.auth = False
 
 with st.sidebar:
-    st.header("🔐 تسجيل الدخول")
-    pwd = st.text_input("كلمة المرور", type="password", key="pwd_input")
-    if st.button("دخول", key="login_btn"):
+    st.markdown("### 🔒 منطقة المسؤول")
+    pwd = st.text_input("كلمة المرور", type="password")
+    if st.button("تسجيل الدخول"):
         if pwd == "EDA2026":
             st.session_state.auth = True
+            st.success("تم الدخول بنجاح")
             st.rerun()
         else:
-            st.error("الكلمة غير صحيحة")
+            st.error("كلمة المرور غير صحيحة")
+    
     if st.session_state.auth:
-        if st.button("تسجيل خروج", key="logout_btn"):
+        if st.button("تسجيل الخروج"):
             st.session_state.auth = False
             st.rerun()
 
-# 6. التبويبات لعرض البيانات
-tab1, tab2 = st.tabs(["👥 المفتشين", "📊 الإنجازات"])
+# 7. عرض البيانات (تبويبات)
+tab1, tab2 = st.tabs(["👥 سجل المفتشين", "📊 سجل الإنجازات"])
 
 with tab1:
     try:
         df_ins = pd.read_csv(READ_LINK_INS)
         st.dataframe(df_ins, use_container_width=True, hide_index=True)
     except Exception as e:
-        st.error(f"خطأ في تحميل جدول المفتشين: {e}")
+        st.error(f"خطأ في الاتصال: {e}")
 
 with tab2:
     try:
         df_ach = pd.read_csv(READ_LINK_ACH)
         st.dataframe(df_ach, use_container_width=True, hide_index=True)
     except Exception as e:
-        st.error(f"خطأ في تحميل جدول الإنجازات: {e}")
+        st.error(f"خطأ في الاتصال: {e}")
 
-# 7. لوحة التحكم (للمسؤول فقط)
+# 8. لوحة الإدارة (تظهر فقط بعد تسجيل الدخول)
 if st.session_state.auth:
     st.divider()
-    st.markdown("### 🛠️ لوحة التحكم السحابي")
+    st.markdown("### ⚙️ إدارة البيانات")
     
-    target = st.radio("اختر الجدول للتعديل:", ["المفتشين", "الإنجازات"], horizontal=True, key="tbl_radio")
-    active_url = LINK_INSPECTORS if target == "المفتشين" else LINK_ACHIEVEMENTS
-    active_read = READ_LINK_INS if target == "المفتشين" else READ_LINK_ACH
+    choice = st.radio("الجدول المراد تعديله:", ["المفتشين", "الإنجازات"], horizontal=True)
+    target_url = LINK_INSPECTORS if choice == "المفتشين" else LINK_ACHIEVEMENTS
+    target_read = READ_LINK_INS if choice == "المفتشين" else READ_LINK_ACH
 
     try:
-        df_active = pd.read_csv(active_read)
+        df_active = pd.read_csv(target_read)
         
-        c1, c2, c3 = st.columns(3)
-        if c1.button("➕ إضافة", key="add_nav"): st.session_state.mode = "add"
-        if c2.button("📝 تعديل", key="edit_nav"): st.session_state.mode = "edit"
-        if c3.button("🗑️ حذف", key="del_nav"): st.session_state.mode = "delete"
+        col1, col2, col3 = st.columns(3)
+        if col1.button("➕ إضافة"): st.session_state.action = "add"
+        if col2.button("📝 تعديل"): st.session_state.action = "edit"
+        if col3.button("🗑️ حذف"): st.session_state.action = "delete"
 
-        # نموذج الإضافة
-        if st.session_state.get('mode') == "add":
-            with st.form("form_add"):
-                st.info(f"إضافة سجل إلى {target}")
-                new_data = {}
+        # العمليات (إضافة/تعديل/حذف)
+        if st.session_state.get('action') == "add":
+            with st.form("add_form"):
+                new_row = {}
                 cols = st.columns(2)
-                for i, col_name in enumerate(df_active.columns):
+                for i, c_name in enumerate(df_active.columns):
                     with cols[i % 2]:
-                        new_data[col_name] = st.text_input(col_name, key=f"in_add_{i}")
-                if st.form_submit_button("حفظ"):
-                    updated = pd.concat([df_active, pd.DataFrame([new_data])], ignore_index=True)
-                    conn.update(spreadsheet=active_url, data=updated)
-                    st.success("تم الحفظ!")
+                        new_row[c_name] = st.text_input(c_name)
+                if st.form_submit_button("إرسال البيانات"):
+                    updated_df = pd.concat([df_active, pd.DataFrame([new_row])], ignore_index=True)
+                    conn.update(spreadsheet=target_url, data=updated_df)
+                    st.success("تمت الإضافة بنجاح!")
                     st.rerun()
 
-        # نموذج التعديل
-        elif st.session_state.get('mode') == "edit":
-            row_idx = st.selectbox("رقم السجل:", df_active.index, key="sel_edit")
-            with st.form("form_edit"):
-                up_data = {}
+        elif st.session_state.get('action') == "edit":
+            idx = st.selectbox("اختر السجل للتعديل:", df_active.index)
+            with st.form("edit_form"):
+                updated_row = {}
                 cols = st.columns(2)
-                for i, col_name in enumerate(df_active.columns):
+                for i, c_name in enumerate(df_active.columns):
                     with cols[i % 2]:
-                        up_data[col_name] = st.text_input(f"تعديل {col_name}", value=str(df_active.at[row_idx, col_name]), key=f"in_ed_{i}")
+                        updated_row[c_name] = st.text_input(c_name, value=str(df_active.at[idx, c_name]))
                 if st.form_submit_button("تحديث"):
-                    for c in df_active.columns: df_active.at[row_idx, c] = up_data[c]
-                    conn.update(spreadsheet=active_url, data=df_active)
+                    for c in df_active.columns: df_active.at[idx, c] = updated_row[c]
+                    conn.update(spreadsheet=target_url, data=df_active)
                     st.success("تم التحديث!")
                     st.rerun()
 
-        # نموذج الحذف
-        elif st.session_state.get('mode') == "delete":
-            row_del = st.selectbox("رقم السجل للحذف:", df_active.index, key="sel_del")
-            if st.button("تأكيد الحذف النهائي", key="btn_confirm_del"):
-                df_active = df_active.drop(row_del)
-                conn.update(spreadsheet=active_url, data=df_active)
+        elif st.session_state.get('action') == "delete":
+            idx_del = st.selectbox("اختر السجل للحذف:", df_active.index)
+            if st.button("تأكيد الحذف"):
+                df_active = df_active.drop(idx_del)
+                conn.update(spreadsheet=target_url, data=df_active)
                 st.success("تم الحذف!")
                 st.rerun()
 
     except Exception as e:
-        st.error(f"تأكد من صلاحيات الـ Editor للرابط: {e}")
+        st.warning("تأكد من إعطاء صلاحية 'Editor' للرابط في جوجل شيت.")
 else:
-    st.info("💡 سجل دخولك من القائمة الجانبية لإدارة البيانات.")
+    st.info("💡 لتعديل البيانات، يرجى تسجيل الدخول من القائمة الجانبية.")
